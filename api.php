@@ -1,4 +1,21 @@
 <?php
+// === THÊM VÀO ĐẦU api.php ===
+function decryptData($base64) {
+    $key = hex2bin('A1B2C3D4E5F60718293A4B5C6D7E8F9012233445566778899AABBCCDDEEFF001');
+    $data = base64_decode($base64);
+    $iv = substr($data, 0, 16);
+    $ciphertext = substr($data, 16);
+    return openssl_decrypt($ciphertext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+}
+
+// Đọc input đã mã hóa
+$rawInput = file_get_contents('php://input');
+if (!empty($rawInput)) {
+    $decrypted = decryptData($rawInput);
+    if ($decrypted) {
+        $input = json_decode($decrypted, true) ?: [];
+    }
+}
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
