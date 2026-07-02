@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monite Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0e15;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .login-box {
+            background: #141a24;
+            border: 1px solid #1e2632;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 400px;
+            margin: 80px auto;
+        }
+        .login-box h1 { text-align: center; margin-bottom: 8px; color: #fff; }
+        .login-box .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 24px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; color: #aaa; margin-bottom: 4px; }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            background: #1a212e;
+            border: 1px solid #2a3444;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-group input:focus { border-color: #6c5ce7; }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #6c5ce7;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #5a4bd1; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-success { background: #2ecc71; }
+        .btn-success:hover { background: #27ae60; }
+        .btn-sm { padding: 6px 14px; font-size: 12px; width: auto; }
+        .error-msg { color: #e74c3c; font-size: 13px; text-align: center; margin-bottom: 12px; display: none; }
+        .admin-panel { display: none; }
+        .admin-panel.active { display: block; }
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 24px; background: #141a24; border: 1px solid #1e2632;
+            border-radius: 12px; margin-bottom: 24px;
+        }
+        .panel-header h2 { font-size: 20px; color: #fff; }
+        .panel-header .user-info { color: #888; font-size: 14px; }
+        .panel-header .user-info strong { color: #6c5ce7; }
+        .stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #141a24; border: 1px solid #1e2632;
+            border-radius: 12px; padding: 20px; text-align: center;
+        }
+        .stat-card .number { font-size: 32px; font-weight: 700; color: #6c5ce7; }
+        .stat-card .label { font-size: 13px; color: #888; margin-top: 4px; }
+        .card {
+            background: #141a24; border: 1px solid #1e2632;
+            border-radius: 12px; padding: 20px; margin-bottom: 20px;
+        }
+        .card h3 { font-size: 16px; color: #fff; margin-bottom: 16px; }
+        .card .flex-row {
+            display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+        }
+        .card .flex-row input {
+            flex: 1; min-width: 200px; padding: 10px 14px;
+            background: #1a212e; border: 1px solid #2a3444;
+            border-radius: 8px; color: #fff; font-size: 14px; outline: none;
+        }
+        .card .flex-row input:focus { border-color: #6c5ce7; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        table th {
+            text-align: left; padding: 10px 12px; border-bottom: 1px solid #1e2632;
+            color: #888; font-weight: 500; font-size: 12px; text-transform: uppercase;
+        }
+        table td { padding: 10px 12px; border-bottom: 1px solid #1a212e; }
+        table tr:hover td { background: #0f151d; }
+        .badge {
+            display: inline-block; padding: 2px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-active { background: #2ecc71; color: #fff; }
+        .badge-inactive { background: #e74c3c; color: #fff; }
+        .badge-expired { background: #f39c12; color: #fff; }
+        .key-value { font-family: monospace; font-size: 13px; color: #6c5ce7; word-break: break-all; }
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .actions .btn-sm { padding: 4px 12px; font-size: 11px; }
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #141a24; border: 1px solid #1e2632;
+            border-radius: 12px; padding: 16px 24px; color: #fff;
+            font-size: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            opacity: 0; transform: translateY(20px); transition: all 0.3s ease;
+            z-index: 9999;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { border-left: 4px solid #2ecc71; }
+        .toast.error { border-left: 4px solid #e74c3c; }
+        .loading {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid #1e2632; border-top-color: #6c5ce7;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 40px; color: #666; }
+        .empty-state p { font-size: 14px; }
+        .offset-row {
+            display: flex; gap: 12px; align-items: center; padding: 6px 0;
+            border-bottom: 1px solid #1a212e;
+        }
+        .offset-row .offset-name {
+            width: 200px; font-size: 13px; color: #aaa; font-family: monospace;
+        }
+        .offset-row input {
+            flex: 1; padding: 6px 12px; background: #1a212e;
+            border: 1px solid #2a3444; border-radius: 6px;
+            color: #fff; font-size: 13px; font-family: monospace; outline: none;
+        }
+        .offset-row input:focus { border-color: #6c5ce7; }
+        @media (max-width: 768px) {
+            .panel-header { flex-direction: column; gap: 8px; text-align: center; }
+            .card .flex-row { flex-direction: column; }
+            .card .flex-row input { width: 100%; min-width: unset; }
+            .stats { grid-template-columns: 1fr 1fr; }
+            .offset-row { flex-direction: column; align-items: stretch; }
+            .offset-row .offset-name { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- LOGIN -->
+    <div id="loginSection">
+        <div class="login-box">
+            <h1>🔐 Monite Admin</h1>
+            <p class="subtitle">Free Fire Offsets & Key Management</p>
+            <div id="loginError" class="error-msg">Invalid credentials</div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" value="admin1" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" value="admin2010" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel" class="admin-panel">
+
+        <div class="panel-header">
+            <h2>⚙️ Monite Dashboard</h2>
+            <div class="user-info">
+                Logged in as <strong id="displayUser">admin1</strong>
+                <button class="btn btn-danger btn-sm" onclick="logout()" style="margin-left:12px;">Logout</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card"><div class="number" id="totalKeys">0</div><div class="label">Total Keys</div></div>
+            <div class="stat-card"><div class="number" id="activeKeys">0</div><div class="label">Active Keys</div></div>
+            <div class="stat-card"><div class="number" id="expiredKeys">0</div><div class="label">Expired Keys</div></div>
+        </div>
+
+        <!-- Create Key -->
+        <div class="card">
+            <h3>➕ Create New Key</h3>
+            <div class="flex-row">
+                <input type="text" id="newKeyInput" placeholder="Key (optional, auto-generate)" style="flex:2;">
+                <input type="number" id="expiryDays" value="30" min="1" max="365" style="width:120px;flex:unset;">
+                <span style="color:#888;font-size:13px;">days</span>
+                <button class="btn btn-success btn-sm" onclick="createKey()">Generate</button>
+            </div>
+        </div>
+
+        <!-- Key List -->
+        <div class="card">
+            <h3>📋 Key List</h3>
+            <div id="keyListContainer"><div class="loading" style="margin:20px auto;display:block;"></div></div>
+        </div>
+
+        <!-- Offsets -->
+        <div class="card">
+            <h3>📐 Offsets Configuration</h3>
+            <p style="color:#888;font-size:13px;margin-bottom:12px;">All offsets default to <code style="color:#6c5ce7;">0x0</code></p>
+            <div id="offsetsContainer"><div class="loading" style="margin:20px auto;display:block;"></div></div>
+            <div style="margin-top:16px;">
+                <button class="btn btn-sm" onclick="saveOffsets()" style="width:auto;background:#6c5ce7;">Save All Offsets</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast" class="toast"></div>
+</div>
+
+<script>
+const API_BASE = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+let authToken = localStorage.getItem('monite_token') || '';
+
+function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function apiCall(action, data = {}) {
+    const payload = { action, ...data };
+    if (authToken) payload.token = authToken;
+    const resp = await fetch(API_BASE + '/api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    return await resp.json();
+}
+
+// LOGIN
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const result = await apiCall('login', {
+        username: document.getElementById('username').value.trim(),
+        password: document.getElementById('password').value.trim()
+    });
+    if (result.success) {
+        authToken = result.token;
+        localStorage.setItem('monite_token', authToken);
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('adminPanel').classList.add('active');
+        document.getElementById('displayUser').textContent = result.user;
+        document.getElementById('loginError').style.display = 'none';
+        loadDashboard();
+        showToast('Login successful!');
+    } else {
+        document.getElementById('loginError').textContent = result.message || 'Invalid credentials';
+        document.getElementById('loginError').style.display = 'block';
+    }
+});
+
+function logout() {
+    authToken = '';
+    localStorage.removeItem('monite_token');
+    document.getElementById('loginSection').style.display = 'block';
+    document.getElementById('adminPanel').classList.remove('active');
+}
+
+// DASHBOARD
+async function loadDashboard() {
+    await Promise.all([loadKeys(), loadOffsets(), loadStats()]);
+}
+
+async function loadStats() {
+    try {
+        const r = await apiCall('stats');
+        if (r.success) {
+            document.getElementById('totalKeys').textContent = r.total || 0;
+            document.getElementById('activeKeys').textContent = r.active || 0;
+            document.getElementById('expiredKeys').textContent = r.expired || 0;
+        }
+    } catch(e) {}
+}
+
+// KEYS
+async function loadKeys() {
+    const c = document.getElementById('keyListContainer');
+    try {
+        const r = await apiCall('list_keys');
+        if (!r.success || !r.keys || r.keys.length === 0) {
+            c.innerHTML = `<div class="empty-state"><p>${r.message || 'No keys found'}</p></div>`;
+            return;
+        }
+        let html = `<table><thead><tr><th>Key</th><th>Status</th><th>Created</th><th>Expires</th><th>Actions</th></tr></thead><tbody>`;
+        r.keys.forEach(k => {
+            const status = k.expired ? 'expired' : (k.active ? 'active' : 'inactive');
+            const badge = status === 'active' ? 'badge-active' : (status === 'expired' ? 'badge-expired' : 'badge-inactive');
+            const label = status === 'active' ? 'Active' : (status === 'expired' ? 'Expired' : 'Inactive');
+            html += `<tr>
+                <td><span class="key-value">${k.key}</span></td>
+                <td><span class="badge ${badge}">${label}</span></td>
+                <td>${k.created_at || '-'}</td>
+                <td>${k.expires_at || '-'}</td>
+                <td>
+                    <div class="actions">
+                        <button class="btn btn-danger btn-sm" onclick="deleteKey('${k.key}')">Delete</button>
+                        <button class="btn btn-sm" onclick="copyKey('${k.key}')" style="background:#3498db;">Copy</button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        html += `</tbody></table>`;
+        c.innerHTML = html;
+    } catch(e) { c.innerHTML = `<div class="empty-state"><p>Error loading keys</p></div>`; }
+}
+
+async function createKey() {
+    const input = document.getElementById('newKeyInput');
+    const days = parseInt(document.getElementById('expiryDays').value) || 30;
+    try {
+        const r = await apiCall('create_key', { custom_key: input.value.trim() || undefined, expiry_days: days });
+        if (r.success) {
+            showToast(`Key created: ${r.key}`);
+            input.value = '';
+            loadDashboard();
+        } else {
+            showToast(r.message || 'Failed', 'error');
+        }
+    } catch(e) { showToast('Error', 'error'); }
+}
+
+async function deleteKey(key) {
+    if (!confirm(`Delete key: ${key}?`)) return;
+    try {
+        const r = await apiCall('delete_key', { key });
+        if (r.success) { showToast('Key deleted'); loadDashboard(); }
+        else showToast(r.message || 'Failed', 'error');
+    } catch(e) { showToast('Error', 'error'); }
+}
+
+function copyKey(key) {
+    navigator.clipboard?.writeText(key)?.then(() => showToast('Copied!'))
+        .catch(() => { const t = document.createElement('textarea'); t.value = key; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); showToast('Copied!'); });
+}
+
+// OFFSETS
+const OFFSET_LIST = [
+    'get_main', 'get_transform', 'get_transformNode', 'WorldToViewpoint',
+    'get_position', 'Team', 'Local', 'get_HP', 'get_maxHP', 'get_IsDieing',
+    'get_IsVisible', 'GetLocalPlayer', 'CurrentMatch', 'Camera_main',
+    'GetRotation', 'get_isLocalTeam', 'get_IsSighting', 'get_IsFiring',
+    'WorldToScreenPoint', 'GetHeadPositions', 'Component_GetTransform',
+    'GetForward', 'Player_GetHeadCollider', 'Transform_GetPosition',
+    'GetAnimator', 'Physics_Raycast', 'set_aim', 'HipPosition',
+    'LeftShoulderPosition', 'RightShoulderPosition', 'LeftAnklePosition',
+    'RightAnklePosition', 'LeftToePosition', 'RightToePosition',
+    'LeftHandPosition', 'RightHandPosition', 'RightForeArmPosition',
+    'LeftForeArmPosition', 'CameraMain', 'IsClientBot', 'IsAvatarInit',
+    'MatchPlayers'
+];
+
+async function loadOffsets() {
+    const c = document.getElementById('offsetsContainer');
+    try {
+        const r = await apiCall('get_offsets');
+        const offsets = r.offsets || {};
+        let html = '';
+        OFFSET_LIST.forEach(name => {
+            const val = offsets[name] || '0x0';
+            html += `<div class="offset-row">
+                <span class="offset-name">${name}</span>
+                <input type="text" id="offset_${name}" value="${val}" placeholder="0x0">
+            </div>`;
+        });
+        c.innerHTML = html;
+    } catch(e) { c.innerHTML = `<div class="empty-state"><p>Error loading offsets</p></div>`; }
+}
+
+async function saveOffsets() {
+    const offsets = {};
+    OFFSET_LIST.forEach(name => {
+        const el = document.getElementById(`offset_${name}`);
+        if (el) offsets[name] = el.value.trim() || '0x0';
+    });
+    try {
+        const r = await apiCall('save_offsets', { offsets });
+        if (r.success) showToast('Offsets saved!');
+        else showToast(r.message || 'Failed', 'error');
+    } catch(e) { showToast('Error', 'error'); }
+}
+
+// Auto-login check
+if (authToken) {
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('adminPanel').classList.add('active');
+    loadDashboard();
+}
+</script>
+</body>
+</html>
