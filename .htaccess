@@ -1,0 +1,13 @@
+RewriteEngine On
+
+RewriteRule ^auth/ios$ auth/ios.php [L]
+RewriteRule ^offsets/freefire/1.114.1$ offsets/freefire/1.114.1.php [L]
+RewriteRule ^check/freefire/1.0.7$ check/freefire/1.0.7.php [L]
+RewriteRule ^request_open_id$ request_open_id.php [L]
+RewriteRule ^check_openid$ check_openid.php [L]
+
+# Block access to .db files
+<Files "*.db">
+    Order Allow,Deny
+    Deny from all
+</Files>
